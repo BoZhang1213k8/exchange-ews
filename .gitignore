@@ -1,0 +1,55 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.python-version
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local secrets and env
+.env
+.env.*
+*.local
+secrets.*
+secret.*
+credentials.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Runtime artifacts / logs
+*.log
+logs/
+tmp/
+temp/
+
+# Local data exports
+data/
+exports/
+attachments/
+cache/
