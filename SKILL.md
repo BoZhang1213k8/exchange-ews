@@ -85,6 +85,14 @@ $env:EWS_PASSWORD_CMD='pwsh -NoProfile -Command "(Get-Secret -Name openclaw_ews_
 python3 scripts/ews_cli.py healthcheck
 ```
 
+查看未读邮件（快捷命令）：
+
+```bash
+python3 scripts/ews_cli.py unread --folder "Inbox"
+```
+
+性能建议：所有需要先拉取邮件再本地筛选的操作默认都使用 `10`（含 `limit/scan-limit`），只有用户明确要求查看更多时再增大参数。
+
 可选包装器（直接使用系统环境变量，如 `~/.zshrc` 中的 `EWS_*`）：
 
 ```bash

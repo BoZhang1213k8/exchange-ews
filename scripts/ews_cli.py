@@ -1200,6 +1200,17 @@ def cmd_agent_op(args) -> int:
     return emit(args, "ok", data, None, f"agent op {op}", started)
 
 
+def cmd_unread(args) -> int:
+    started = time.time()
+    account = build_account(args)
+    op_args = argparse.Namespace(**vars(args))
+    op_args.name = "mailbox.message.list_unread"
+    # Keep unread lookup lightweight by default while ensuring requested page size can be fulfilled.
+    op_args.scan_limit = max(int(getattr(op_args, "scan_limit", 0) or 0), int(getattr(op_args, "limit", 0) or 0))
+    data = agent_op(op_args, account)
+    return emit(args, "ok", data, None, "unread", started)
+
+
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Exchange EWS primitive execution for OpenClaw agent")
     p.add_argument("--endpoint", default="", help="EWS endpoint")
@@ -1213,6 +1224,19 @@ def parser() -> argparse.ArgumentParser:
 
     h = sub.add_parser("healthcheck")
     h.set_defaults(func=cmd_healthcheck)
+
+    unread = sub.add_parser("unread", help="List unread messages")
+    unread.add_argument("--folder", default="Inbox")
+    unread.add_argument("--keyword", default="")
+    unread.add_argument("--sender-filter", default="")
+    unread.add_argument("--has-attachments", action="store_true")
+    unread.add_argument("--sort-by", choices=["received", "subject", "from"], default="received")
+    unread.add_argument("--sort-desc", dest="sort_desc", action="store_true")
+    unread.add_argument("--sort-asc", dest="sort_desc", action="store_false")
+    unread.add_argument("--offset", type=int, default=0)
+    unread.add_argument("--scan-limit", type=int, default=10)
+    unread.add_argument("--limit", type=int, default=10)
+    unread.set_defaults(func=cmd_unread, sort_desc=True)
 
     a = sub.add_parser("agent", help="Agent primitives")
     a_sub = a.add_subparsers(dest="agent_command", required=True)
@@ -1240,8 +1264,8 @@ def parser() -> argparse.ArgumentParser:
     op.add_argument("--sort-desc", dest="sort_desc", action="store_true")
     op.add_argument("--sort-asc", dest="sort_desc", action="store_false")
     op.add_argument("--offset", type=int, default=0)
-    op.add_argument("--scan-limit", type=int, default=300)
-    op.add_argument("--limit", type=int, default=20)
+    op.add_argument("--scan-limit", type=int, default=10)
+    op.add_argument("--limit", type=int, default=10)
     op.add_argument("--attachment-name", default="")
     op.add_argument("--attachment-index", type=int, default=0)
     op.add_argument("--out-dir", default="outputs/attachments")

@@ -59,6 +59,16 @@ export EWS_PASSWORD_CMD="your-secret-command"
 python3 scripts/ews_cli.py healthcheck
 ```
 
+### 4) 查看未读邮件
+
+```bash
+python3 scripts/ews_cli.py unread --folder "Inbox"
+```
+
+性能建议：凡是需要先拉取邮件再本地筛选的操作，默认都按 `10` 封执行（包括 `unread` 及 `agent op` 下的收件箱列表/检索类操作）。只有在确实要查看更多时再调大 `--limit` / `--scan-limit`。
+
+支持常用筛选与分页参数：`--keyword`、`--sender-filter`、`--has-attachments`、`--offset`、`--scan-limit`、`--sort-by`、`--sort-asc/--sort-desc`。
+
 ## 凭据与安全
 
 请勿将真实凭据写入仓库。
