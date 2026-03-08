@@ -106,6 +106,42 @@ LOCAL_ONLY_OPS = {
 }
 
 
+def _strip_wrapping_quotes(value: str) -> str:
+    if len(value) >= 2 and ((value[0] == value[-1] == '"') or (value[0] == value[-1] == "'")):
+        return value[1:-1]
+    return value
+
+
+def load_dotenv_files() -> None:
+    candidates = [
+        Path.cwd() / ".env",
+        Path(__file__).resolve().parents[1] / ".env",
+    ]
+    seen: set[str] = set()
+    for env_path in candidates:
+        resolved = str(env_path.resolve())
+        if resolved in seen or not env_path.exists() or not env_path.is_file():
+            continue
+        seen.add(resolved)
+        try:
+            for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if line.startswith("export "):
+                    line = line[len("export ") :].strip()
+                if "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                if not key or key in os.environ:
+                    continue
+                os.environ[key] = _strip_wrapping_quotes(value.strip())
+        except Exception:
+            # .env is best-effort local convenience; ignore parse/read failures.
+            continue
+
+
 @dataclass
 class Envelope:
     status: str
@@ -1241,6 +1277,7 @@ def normalize_flags(args):
 
 
 def main() -> int:
+    load_dotenv_files()
     p = parser()
     args = p.parse_args()
     normalize_flags(args)

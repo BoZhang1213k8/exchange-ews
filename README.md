@@ -24,6 +24,17 @@ pip3 install -r requirements.txt
 
 ### 2) 配置环境变量
 
+推荐使用本地 `.env`（不会提交到仓库）：
+
+```bash
+cp .env.example .env
+# 编辑 .env，填入真实 EWS_* 参数
+```
+
+`scripts/ews_cli.py` 会在启动时自动读取 `.env`（当前目录优先；仅注入未设置变量，不覆盖已有系统环境变量）。
+
+也可以直接使用 export：
+
 ```bash
 export EWS_ENDPOINT="https://mail.example.com/EWS/Exchange.asmx"
 export EWS_EMAIL="user@example.com"
