@@ -65,7 +65,7 @@ python3 scripts/ews_cli.py healthcheck
 python3 scripts/ews_cli.py unread --folder "Inbox"
 ```
 
-性能建议：凡是需要先拉取邮件再本地筛选的操作，默认都按 `10` 封执行（包括 `unread` 及 `agent op` 下的收件箱列表/检索类操作）。只有在确实要查看更多时再调大 `--limit` / `--scan-limit`。
+性能建议：凡是需要先拉取邮件再本地筛选的操作，默认都按 `10` 封执行（包括 `unread` 及 `agent op` 下的收件箱列表/检索类操作）。当前实现会优先在服务端执行未读/附件过滤，再做本地兜底；只有在确实要查看更多时再调大 `--limit` / `--scan-limit`。
 
 支持常用筛选与分页参数：`--keyword`、`--sender-filter`、`--has-attachments`、`--offset`、`--scan-limit`、`--sort-by`、`--sort-asc/--sort-desc`。
 

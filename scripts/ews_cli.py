@@ -239,6 +239,22 @@ def resolve_folder(account: Account, name: str):
     raise ValueError(f"Folder not found: {name}")
 
 
+def iter_recent_rows(folder, args, op: str):
+    """
+    Build a queryset with best-effort server-side filtering.
+    Falls back to broad query if a filter is unsupported by EWS schema.
+    """
+    qs = folder.all()
+    try:
+        if op == "mailbox.message.list_unread":
+            qs = qs.filter(is_read=False)
+        if getattr(args, "has_attachments", False):
+            qs = qs.filter(has_attachments=True)
+    except Exception:
+        qs = folder.all()
+    return qs.order_by("-datetime_received")
+
+
 def serialize_message(item, include_body: bool = False, include_attachments: bool = False) -> Dict[str, Any]:
     data = {
         "id": str(getattr(item, "id", "")),
@@ -992,7 +1008,8 @@ def agent_op(args, account: Optional[Account]) -> Dict[str, Any]:
             changed = True
         return finalize(report)
     if op in {"mailbox.inbox.list", "mail.search", "mail.filter", "mail.sort", "mailbox.message.list_unread"}:
-        rows = list(folder.all().order_by("-datetime_received")[: args.scan_limit])
+        rows = list(iter_recent_rows(folder, args, op)[: args.scan_limit])
+        # Local fallback keeps behavior stable if server-side filtering is unavailable.
         if op == "mailbox.message.list_unread":
             rows = [x for x in rows if not bool(getattr(x, "is_read", False))]
         keyword = (args.keyword or "").lower()
@@ -1003,13 +1020,18 @@ def agent_op(args, account: Optional[Account]) -> Dict[str, Any]:
             rows = [x for x in rows if sender_filter in ((x.sender.email_address if getattr(x, "sender", None) else "").lower())]
         if args.has_attachments:
             rows = [x for x in rows if bool(getattr(x, "has_attachments", False))]
+        # Fast path: default receive-time sort can page before serialization.
+        if args.sort_by == "received":
+            total = len(rows)
+            ordered_rows = rows if args.sort_desc else list(reversed(rows))
+            paged_rows = ordered_rows[args.offset : args.offset + args.limit]
+            paged = [serialize_message(x) for x in paged_rows]
+            return {"status": "ok", "count": len(paged), "total": total, "items": paged}
         serialized = [serialize_message(x) for x in rows]
         if args.sort_by == "subject":
             serialized.sort(key=lambda x: x.get("subject", "").lower(), reverse=args.sort_desc)
         elif args.sort_by == "from":
             serialized.sort(key=lambda x: x.get("from", "").lower(), reverse=args.sort_desc)
-        else:
-            serialized.sort(key=lambda x: x.get("datetime_received", ""), reverse=args.sort_desc)
         paged = serialized[args.offset : args.offset + args.limit]
         return {"status": "ok", "count": len(paged), "total": len(serialized), "items": paged}
     if op == "mailbox.message.get":

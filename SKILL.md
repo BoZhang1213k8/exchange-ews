@@ -91,7 +91,7 @@ python3 scripts/ews_cli.py healthcheck
 python3 scripts/ews_cli.py unread --folder "Inbox"
 ```
 
-性能建议：所有需要先拉取邮件再本地筛选的操作默认都使用 `10`（含 `limit/scan-limit`），只有用户明确要求查看更多时再增大参数。
+性能建议：所有需要先拉取邮件再本地筛选的操作默认都使用 `10`（含 `limit/scan-limit`），并优先走服务端过滤（如未读/附件）后本地兜底；只有用户明确要求查看更多时再增大参数。
 
 可选包装器（直接使用系统环境变量，如 `~/.zshrc` 中的 `EWS_*`）：
 
